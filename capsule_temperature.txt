@@ -1,41 +1,16 @@
 Data logging initiated - 28/04/2026
 Location - Nottingham
-
-Minute		0
-Temperature	4.74 C
-
-Minute		1
-Temperature	-50.00 C
-
-Minute		2
-Temperature	-10.41 C
-
-Minute		3
-Temperature	-50.00 C
-
-Minute		4
-Temperature	-50.00 C
-
-Minute		5
-Temperature	1.81 C
-
-Minute		6
-Temperature	-50.00 C
-
-Minute		7
-Temperature	-50.00 C
-
-Minute		8
-Temperature	-50.00 C
-
-Minute		9
-Temperature	-50.00 C
-
-Minute		10
-Temperature	-50.00 C
-
-Max temp	6.70 C
+Minute0	Temperature-34.85 C
+Minute1	Temperature-50.00 C
+Minute2	Temperature-50.00 C
+Minute3	Temperature-6.50 C
+Minute4	Temperature-11.88 C
+Minute5	Temperature-50.00 C
+Minute6	Temperature-50.00 C
+Minute7	Temperature-50.00 C
+Minute8	Temperature-50.00 C
+Minute9	Temperature-50.00 C
+Max temp	6.21 C
 Min temp	-50.00 C
-Average temp	-34.68 C
-
+Average temp	-34.82 C
 Data logging terminated
