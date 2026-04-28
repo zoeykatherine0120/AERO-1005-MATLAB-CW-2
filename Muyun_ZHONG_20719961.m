@@ -27,73 +27,93 @@ disp('Preliminary task completed: Arduino connected and LED tested')
 %% TASK 1 - READ TEMPERATURE DATA, PLOT, AND WRITE TO A LOG FILE [20 MARKS]
 
 % Insert answers here
-duration = 600; % 10 minutes (600 seconds)
-tempSensorPin = 'A0';
+% Task 1a: Connect thermistor to A0 (example)
+analogPin = 'A0';
+duration = 600; % seconds
+fs = 1;         % sampling frequency (Hz)
+numSamples = duration * fs;
 
-% MCP9700A Thermistor constants (from datasheet)
-v_0 = 0.5; % 500 mV at 0°C
-t_c = 0.01; % 10 mV/°C
+% Preallocate arrays
+voltage = zeros(1, numSamples);
+temperature = zeros(1, numSamples);
+timeVec = (0:numSamples-1)';
 
-time_data = zeros(1, duration);
-temp_data = zeros(1, duration);
+% Thermistor parameters (from datasheet)
+T_C = 0.01;      % Temperature coefficient (V/°C) - example value
+V_OC = 0.5;      % Zero-degree voltage (V) - example value
 
-disp('Task 1: Data logging initiated. This will take 10 minutes...');
-for t = 1:duration
-    v_read = readVoltage(a, tempSensorPin);
-    % Convert voltage to temperature
-    temp_C = (v_read - v_0) / t_c;
-    
-    time_data(t) = t - 1;
-    temp_data(t) = temp_C;
-    
-    pause(1); % Read approx every 1 second
+% Data acquisition
+fprintf('Acquiring temperature data for 10 minutes...\n');
+for i = 1:numSamples
+    voltage(i) = readVoltage(a, analogPin);
+    temperature(i) = (voltage(i) - V_OC) / T_C;
+    pause(fs);
 end
 
-% Calculate statistics
-max_temp = max(temp_data);
-min_temp = min(temp_data);
-avg_temp = mean(temp_data);
+% Statistical quantities
+minTemp = min(temperature);
+maxTemp = max(temperature);
+avgTemp = mean(temperature);
 
-% Plotting the data
+% Task 1c: Plot and save as image
 figure;
-plot(time_data, temp_data, 'b-', 'LineWidth', 1.5);
-xlabel('Time (s)');
-ylabel('Temperature (C)');
+plot(timeVec, temperature, 'b-', 'LineWidth', 1.5);
+xlabel('Time (seconds)');
+ylabel('Temperature (°C)');
 title('Capsule Temperature over 10 Minutes');
 grid on;
+saveas(gcf, 'temperature_plot.png');
+% Include this image in your .docx file
 
-% Output formatting (matching Table 1 in the brief)
-log_text = sprintf('Data logging initiated - %s\nLocation - Nottingham\n\n', datestr(now, 'dd/mm/yyyy'));
-for m = 0:10
-    idx = m * 60 + 1;
-    if idx > duration
-        idx = duration; 
-    end
-    log_text = [log_text, sprintf('Minute\t\t%d\nTemperature\t%.2f C\n\n', m, temp_data(idx))];
-end
-log_text = [log_text, sprintf('Max temp\t%.2f C\nMin temp\t%.2f C\nAverage temp\t%.2f C\n\nData logging terminated\n', max_temp, min_temp, avg_temp)];
-
-% Print to screen
-fprintf('%s', log_text);
-
-% Write to file
+% Task 1d & 1e: Print to screen and write to log file
 fileID = fopen('capsule_temperature.txt', 'w');
-fprintf(fileID, '%s', log_text);
-fclose(fileID);
-disp('Task 1 complete: Log saved to capsule_temperature.txt');
+currentDate = datestr(now, 'dd/mm/yyyy');
+location = 'Nottingham';
 
+fprintf(fileID, 'Data logging initiated - %s\n', currentDate);
+fprintf(fileID, 'Location - %s\n', location);
+fprintf('Data logging initiated - %s\n', currentDate);
+fprintf('Location - %s\n', location);
+
+for minute = 0:10
+    idx = minute * 60 + 1;
+    if idx <= numSamples
+        tempVal = temperature(idx);
+        fprintf(fileID, 'Minute%d\tTemperature%.2f C\n', minute, tempVal);
+        fprintf('Minute%d\tTemperature%.2f C\n', minute, tempVal);
+    end
+end
+
+fprintf(fileID, 'Max temp\t%.2f C\n', maxTemp);
+fprintf(fileID, 'Min temp\t%.2f C\n', minTemp);
+fprintf(fileID, 'Average temp\t%.2f C\n', avgTemp);
+fprintf(fileID, 'Data logging terminated\n');
+
+fprintf('Max temp\t%.2f C\n', maxTemp);
+fprintf('Min temp\t%.2f C\n', minTemp);
+fprintf('Average temp\t%.2f C\n', avgTemp);
+fprintf('Data logging terminated\n');
+
+fclose(fileID);
 
 %% TASK 2 - LED TEMPERATURE MONITORING DEVICE IMPLEMENTATION [25 MARKS]
 
 % Insert answers here
-Task_2_temp_monitor(a);
+%Task 2f: Connect LEDs to pins (example)
+greenPin = 'D3';
+yellowPin = 'D5';
+redPin = 'D6';
 
+% Call temperature monitoring function
+Task_2_temp_monitor(a, analogPin, greenPin, yellowPin, redPin);
 
 %% TASK 3 - ALGORITHMS – TEMPERATURE PREDICTION [30 MARKS]
 
 % Insert answers here
-Task_3_temp_prediction(a);
+% Call prediction function
 
+
+Task_3_temp_prediction(a, analogPin, greenPin, yellowPin, redPin);
 
 %% TASK 4 - REFLECTIVE STATEMENT [5 MARKS]
 
