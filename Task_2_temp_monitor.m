@@ -1,82 +1,77 @@
-function Task_2_temp_monitor(a)
-%TEMP_MONITOR Continuously monitors temperature, updates live plot, and controls LEDs.
-%   TEMP_MONITOR(a) uses the arduino object 'a' to read from an MCP9700A 
-%   thermistor on pin A0. It plots the live temperature updated every 1s.
-%   Comfort range is 18-24 C (Green LED constant).
-%   Below 18 C: Yellow LED blinks at 0.5s interval.
-%   Above 24 C: Red LED blinks at 0.25s interval.
+function Task_2_temp_monitor(a, analogPin, greenPin, yellowPin, redPin)
+% TEMP_MONITOR Monitors temperature and controls LEDs accordingly.
+%   This function reads temperature from a thermistor connected to
+%   analogPin, plots live temperature data, and controls three LEDs
+%   based on comfort range (18-24°C):
+%       - Green: constant ON when temp in range.
+%       - Yellow: blink 0.5s when temp < 18°C.
+%       - Red: blink 0.25s when temp > 24°C.
+%
+%   Inputs:
+%       a         - Arduino object
+%       analogPin - Analog pin for thermistor (e.g., 'A0')
+%       greenPin  - Digital pin for green LED
+%       yellowPin - Digital pin for yellow LED
+%       redPin    - Digital pin for red LED
+%
+%   See also ARDUINO, READVOLTAGE, WRITEDIGITALPIN
 
-tempSensorPin = 'A0';
-greenLED = 'D2';
-yellowLED = 'D3';
-redLED = 'D4';
+% Thermistor parameters (must match main script)
+T_C = 0.01;
+V_OC = 0.5;
 
-% Thermistor constants
-v_0 = 0.5; 
-t_c = 0.01;
-
-% Initialize Live Plot
+% Setup figure for live plotting
 figure;
-hPlot = plot(nan, nan, 'b-', 'LineWidth', 1.5);
-xlabel('Time (s)');
-ylabel('Temperature (C)');
-title('Live Capsule Temperature Monitoring');
-xlim([0, 100]); 
-ylim([10, 35]);
+h = plot(nan, nan);
+xlabel('Time (seconds)');
+ylabel('Temperature (°C)');
+title('Live Temperature Monitoring');
 grid on;
+xlim([0 60]);
+ylim([10 40]);
 
-startTime = tic;
 timeData = [];
 tempData = [];
+t0 = tic;
 
-lastGraphUpdate = 0;
-ledState = 0;
-lastLEDToggle = 0;
-
-disp('Starting Task 2 Continuous Monitor. Press Ctrl+C to stop.');
+fprintf('Temperature monitoring started. Press Ctrl+C to stop.\n');
 
 while true
-    currentTime = toc(startTime);
-    v_read = readVoltage(a, tempSensorPin);
-    currentTemp = (v_read - v_0) / t_c;
-
-    % Update graph roughly every 1s
-    if currentTime - lastGraphUpdate >= 1
-        timeData = [timeData, currentTime];
-        tempData = [tempData, currentTemp];
-        set(hPlot, 'XData', timeData, 'YData', tempData);
-        if currentTime > 100
-            xlim([currentTime - 100, currentTime]);
-        end
-        drawnow;
-        lastGraphUpdate = currentTime;
+    % Read temperature
+    voltage = readVoltage(a, analogPin);
+    temperature = (voltage - V_OC) / T_C;
+    
+    % Update live plot
+    elapsedTime = toc(t0);
+    timeData = [timeData, elapsedTime];
+    tempData = [tempData, temperature];
+    set(h, 'XData', timeData, 'YData', tempData);
+    drawnow;
+    
+    % LED control logic
+    if temperature >= 18 && temperature <= 24
+        % Green constant ON, others OFF
+        writeDigitalPin(a, greenPin, 1);
+        writeDigitalPin(a, yellowPin, 0);
+        writeDigitalPin(a, redPin, 0);
+    elseif temperature < 18
+        % Yellow blinking 0.5s
+        writeDigitalPin(a, greenPin, 0);
+        writeDigitalPin(a, redPin, 0);
+        writeDigitalPin(a, yellowPin, 1);
+        pause(0.5);
+        writeDigitalPin(a, yellowPin, 0);
+        pause(0.5);
+    else % temperature > 24
+        % Red blinking 0.25s
+        writeDigitalPin(a, greenPin, 0);
+        writeDigitalPin(a, yellowPin, 0);
+        writeDigitalPin(a, redPin, 1);
+        pause(0.25);
+        writeDigitalPin(a, redPin, 0);
+        pause(0.25);
     end
-
-    % LED Control Logic based on temperature
-    if currentTemp >= 18 && currentTemp <= 24
-        writeDigitalPin(a, greenLED, 1);
-        writeDigitalPin(a, yellowLED, 0);
-        writeDigitalPin(a, redLED, 0);
-
-    elseif currentTemp < 18
-        writeDigitalPin(a, greenLED, 0);
-        writeDigitalPin(a, redLED, 0);
-        if currentTime - lastLEDToggle >= 0.5
-            ledState = ~ledState;
-            writeDigitalPin(a, yellowLED, ledState);
-            lastLEDToggle = currentTime;
-        end
-
-    elseif currentTemp > 24
-        writeDigitalPin(a, greenLED, 0);
-        writeDigitalPin(a, yellowLED, 0);
-        if currentTime - lastLEDToggle >= 0.25
-            ledState = ~ledState;
-            writeDigitalPin(a, redLED, ledState);
-            lastLEDToggle = currentTime;
-        end
-    end
-
-    pause(0.05);
+    
+    pause(1 - mod(toc(t0), 1)); % Maintain 1s sampling
 end
 end
